@@ -20,7 +20,7 @@
 Put simple: your own login process, from scratch. Feed your own login flow, and your own UI.
 You may add your own logic before the UI, during auth, or after the user logs in.
 
-**bengal** includes an **Authentication Plugin** bundled within (```AuthorizationBundle/```), alongside the user interface of the login screen itself (```AuthorizationBundle/Sources/LoginUI.swift```). **Customizing the login screen requires some good knowledge of Swift.** (though I hope to make it significantly easier and accessible for everybody in the future)
+**bengal** includes an **Authentication Plugin** bundled within (```AuthorizationBundle/```), alongside the user interface of the login screen itself (```AuthorizationBundle/Sources/LoginUI.swift```). ***(login screen UI customization requires using the app for now)***
 
 You may use this tool using the CLI or the [wrapper app](https://github.com/naomisphere/bengal/releases/latest). Prebuilts can be found in the [Releases](https://github.com/naomisphere/bengal/releases/latest) tab.
 
