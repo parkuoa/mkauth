@@ -630,6 +630,13 @@ private func setupCustomizationContent(stack: NSStackView) {
             let resourcePath = Bundle.main.resourcePath ?? ""
             let bundle_source = "\(resourcePath)/login/BengalLogin.bundle"
             let saa_path = "/Library/Security/SecurityAgentPlugins"
+            let bundle_plugin_path = "/Library/Security/SecurityAgentPlugins/BengalLogin.bundle"
+
+            if FileManager.default.fileExists(atPath: bundle_plugin_path) {
+                append_term_output("AuthBundle already exists\n", color: .white)
+                self.run_command(baseArgs: ["-bengal"], sudo: true)
+                return
+            }
             
             // attempt to copy authbundle > SecurityAgentPlugins
             let script = "do shell script \"cp -rf '\(bundle_source)' '\(saa_path)'\" with administrator privileges"

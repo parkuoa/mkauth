@@ -26,13 +26,16 @@ app: $(CLI)
 	@echo "building bengal.app..."
 	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/MacOS"
 	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources"
-	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources/img"
+	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources/{img,login}"
+	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources/login/BengalLogin.bundle"
 	$(SWIFT) $(APP_SOURCES) -o "$(APP_BUNDLE_DIR)/Contents/MacOS/bengalwrapper"
 	@cp app_src/Info.plist "$(APP_BUNDLE_DIR)/Contents/"
 	@cp $(CLI) "$(APP_BUNDLE_DIR)/Contents/Resources/"
 	@cp $(FONTS) "$(APP_BUNDLE_DIR)/Contents/Resources/"
 	@cp -r app_src/img/* "$(APP_BUNDLE_DIR)/Contents/Resources/img/" 2>/dev/null || true
 	@cp app_src/img/logo.icns "$(APP_BUNDLE_DIR)/Contents/Resources/" 2>/dev/null || true
+	/bin/bash ./AuthorizationBundle/build.sh
+	@cp -rf AuthorizationBundle/build/BengalLogin.bundle/* "$(APP_BUNDLE_DIR)/Contents/Resources/login/BengalLogin.bundle/"
 	@echo "app built successfully: $(APP_BUNDLE_DIR)"
 
 clean:
