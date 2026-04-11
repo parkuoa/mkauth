@@ -26,7 +26,7 @@ app: $(CLI)
 	@echo "building bengal.app..."
 	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/MacOS"
 	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources"
-	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources/{img,login}"
+	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources/img"
 	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources/login/BengalLogin.bundle"
 	$(SWIFT) $(APP_SOURCES) -o "$(APP_BUNDLE_DIR)/Contents/MacOS/bengalwrapper"
 	@cp app_src/Info.plist "$(APP_BUNDLE_DIR)/Contents/"
