@@ -1,0 +1,6 @@
+[submodule "AuthorizationBundle"]
+	path = AuthorizationBundle
+	url = https://github.com/bengalauth/AuthorizationBundle
+[submodule "app"]
+	path = app
+	url = https://github.com/bengalauth/app
