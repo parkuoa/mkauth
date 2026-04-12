@@ -481,6 +481,7 @@ class GradientLabel: NSTextField {
     }
 }
 
+
 class FieldBackground: NSView {
     var isFocused = false { didSet { needsDisplay = true } }
 
@@ -499,6 +500,64 @@ class FieldBackground: NSView {
         path.stroke()
     }
 }
+
+
+class SmallArrowButton: NSView {
+    var action: (() -> Void)?
+    var direction: ArrowDirection = .right
+    var isHovered = false { didSet { needsDisplay = true } }
+    var isPressed = false { didSet { needsDisplay = true } }
+    
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        let ta = NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self, userInfo: nil)
+        addTrackingArea(ta)
+    }
+    required init?(coder: NSCoder) { super.init(coder: coder) }
+    
+    override func draw(_ dirtyRect: NSRect) {
+        let r = bounds.insetBy(dx: 1, dy: 1)
+        let path = NSBezierPath(ovalIn: r)
+        
+        if isHovered || isPressed {
+            NSColor.white.withAlphaComponent(isPressed ? 0.3 : 0.15).setFill()
+            path.fill()
+        }
+        NSColor.white.withAlphaComponent(0.25).setStroke()
+        path.lineWidth = 1.2
+        path.stroke()
+        
+        let arrowPath = NSBezierPath()
+        let center = NSPoint(x: bounds.midX, y: bounds.midY)
+        let size: CGFloat = 6
+        
+        if direction == .right {
+            arrowPath.move(to: NSPoint(x: center.x - size/2, y: center.y - size))
+            arrowPath.line(to: NSPoint(x: center.x + size/2, y: center.y))
+            arrowPath.line(to: NSPoint(x: center.x - size/2, y: center.y + size))
+        } else {
+            arrowPath.move(to: NSPoint(x: center.x + size/2, y: center.y - size))
+            arrowPath.line(to: NSPoint(x: center.x - size/2, y: center.y))
+            arrowPath.line(to: NSPoint(x: center.x + size/2, y: center.y + size))
+        }
+        
+        NSColor.white.withAlphaComponent(0.8).setStroke()
+        arrowPath.lineWidth = 1.5
+        arrowPath.lineCapStyle = .round
+        arrowPath.lineJoinStyle = .round
+        arrowPath.stroke()
+    }
+    
+    override func mouseDown(with event: NSEvent) { isPressed = true }
+    override func mouseUp(with event: NSEvent) {
+        isPressed = false
+        if bounds.contains(convert(event.locationInWindow, from: nil)) { action?() }
+    }
+    override func mouseEntered(with event: NSEvent) { isHovered = true }
+    override func mouseExited(with event: NSEvent) { isHovered = false }
+}
+
 
 // tag:loginwindowm
 class LoginWindow: NSWindow {
@@ -524,6 +583,8 @@ class LoginUI: NSObject, NSWindowDelegate, NSTextFieldDelegate {
     var spinner: NSProgressIndicator!
     var user_avatar_image: NSImageView!
     var userBgFields: [NSTextField: FieldBackground] = [:]
+    var powerButtonsY: CGFloat = 0
+    var isAnimatingUsername = false
     
     // tag:powerbuttons
     var shutdownButton: PowerButton!
@@ -531,8 +592,8 @@ class LoginUI: NSObject, NSWindowDelegate, NSTextFieldDelegate {
     var sleepButton: PowerButton!
     
     var usernameLabel: NSTextField!
-    var usernameEditArrow: ModernArrowButton!
-    var usernameBackArrow: ModernArrowButton!
+    var usernameEditArrow: SmallArrowButton!
+    var usernameBackArrow: SmallArrowButton!
     var minimalisticLoginButton: ModernArrowButton!
     var usernameContainer: NSView!
     var formContainer: NSView! // container for fields and login button
@@ -688,8 +749,15 @@ class LoginUI: NSObject, NSWindowDelegate, NSTextFieldDelegate {
     }
     
     // power buttons positioning
-    let powerButtonsFrame = settings.uiMode == "minimalistic" ? NSRect(x: W/2 - 210, y: H/2 - 180, width: 420, height: 460) : container.frame
-    setupPowerButtons(in: root, cardFrame: powerButtonsFrame)
+    var powerButtonsY: CGFloat
+
+    if settings.uiMode == "minimalistic" {
+        powerButtonsY = (H/2 - 40) - 40
+    } else {
+        powerButtonsY = container.frame.minY - 40
+    }
+
+    setupPowerButtons(in: root, centerY: powerButtonsY)
 
     window.contentView = root
     window.makeKeyAndOrderFront(nil)
@@ -762,8 +830,9 @@ func buildMinimalisticUI(root: NSView) {
     usernameLabel.frame = usernameContainer.bounds
     usernameContainer.addSubview(usernameLabel)
     
-    usernameEditArrow = ModernArrowButton(frame: NSRect(x: usernameContainer.bounds.midX + (displayName as NSString).size(withAttributes: [.font: usernameLabel.font!]).width/2 + 5, y: 5, width: 20, height: 20))
-    usernameEditArrow.style = .circular
+    let textWidth = (displayName as NSString).size(withAttributes: [.font: usernameLabel.font!]).width
+    let arrowY = usernameLabel.frame.origin.y + (usernameLabel.frame.height - 20) / 2
+    usernameEditArrow = SmallArrowButton(frame: NSRect(x: usernameContainer.bounds.midX + textWidth/2 + 8, y: 10, width: 20, height: 20))
     usernameEditArrow.direction = .right
     usernameEditArrow.alphaValue = 0
     usernameEditArrow.action = { [weak self] in self?.toggleUsernameField(true) }
@@ -813,13 +882,12 @@ func buildMinimalisticUI(root: NSView) {
     userBg.addSubview(username_field)
     userBgFields[username_field] = userBg
     
-    usernameBackArrow = ModernArrowButton(frame: NSRect(x: -30, y: 50 + (fieldH-20)/2, width: 20, height: 20))
+    usernameBackArrow = SmallArrowButton(frame: NSRect(x: formContainer.frame.minX - 35, y: formContainer.frame.midY + 25 - 10, width: 20, height: 20))
     usernameBackArrow.direction = .left
-    usernameBackArrow.style = .circular
     usernameBackArrow.alphaValue = 0
     usernameBackArrow.isHidden = true
     usernameBackArrow.action = { [weak self] in self?.toggleUsernameField(false) }
-    formContainer.addSubview(usernameBackArrow)
+    container.addSubview(usernameBackArrow)
     
     // tag:min_passwordfield
     let passBg = FieldBackground(frame: NSRect(x: 0, y: 0, width: fieldW, height: fieldH))
@@ -863,35 +931,79 @@ func buildMinimalisticUI(root: NSView) {
 
 func toggleUsernameField(_ show: Bool) {
     guard let userBg = userBgFields[username_field] else { return }
+    guard !isAnimatingUsername else { return }
     
-    NSAnimationContext.runAnimationGroup { ctx in
-        ctx.duration = 0.3
-        ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+    isAnimatingUsername = true
+    
+    if show {
+        usernameBackArrow.frame.origin.x = formContainer.frame.origin.x - 35
+        usernameBackArrow.frame.origin.y = formContainer.frame.origin.y + 50 + (42 - 20) / 2
+        container.addSubview(usernameBackArrow)
+    }
+    
+    let duration: TimeInterval = 0.3
+    
+    if show {
+        usernameLabel.animator().alphaValue = 0
+        usernameEditArrow.isHidden = true
+        usernameEditArrow.animator().alphaValue = 0
+        userBg.isHidden = false
+        userBg.animator().alphaValue = 1
+        usernameBackArrow.isHidden = false
+        usernameBackArrow.animator().alphaValue = 1
         
-        if show {
-            usernameLabel.animator().alphaValue = 0
-            usernameEditArrow.animator().alphaValue = 0
-            userBg.isHidden = false
-            userBg.animator().alphaValue = 1
-            usernameBackArrow.isHidden = false
-            usernameBackArrow.animator().alphaValue = 1
-            
-            // slide down
-            formContainer.animator().frame.origin.y -= 25
-        } else {
-            usernameLabel.animator().alphaValue = 1
-            userBg.animator().alphaValue = 0
-            usernameBackArrow.animator().alphaValue = 0
-            
-            // slide up
-            formContainer.animator().frame.origin.y += 25
-        }
-    } completionHandler: {
-        if !show {
+        var newFrame = formContainer.frame
+        newFrame.origin.y -= 25
+        formContainer.animator().setFrameOrigin(newFrame.origin)
+        
+        let fieldHeight: CGFloat = 42
+        let arrowHeight: CGFloat = 20
+        let offset1: CGFloat = 50
+        let offset2: CGFloat = (fieldHeight - arrowHeight) / 2
+        let offset3: CGFloat = 25
+        
+        var arrowFrame = usernameBackArrow.frame
+        let newY = formContainer.frame.origin.y + offset1 + offset2 - offset3
+        arrowFrame.origin.y = newY
+        usernameBackArrow.animator().setFrameOrigin(arrowFrame.origin)
+        
+        shutdownButton.animator().frame.origin.y -= 25
+        restartButton.animator().frame.origin.y -= 25
+        sleepButton.animator().frame.origin.y -= 25
+        
+    } else {
+        usernameLabel.animator().alphaValue = 1
+        usernameEditArrow.isHidden = false
+        userBg.animator().alphaValue = 0
+        usernameBackArrow.animator().alphaValue = 0
+        
+        var newFrame = formContainer.frame
+        newFrame.origin.y += 25
+        formContainer.animator().setFrameOrigin(newFrame.origin)
+        
+        shutdownButton.animator().frame.origin.y += 25
+        restartButton.animator().frame.origin.y += 25
+        sleepButton.animator().frame.origin.y += 25
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
             userBg.isHidden = true
             self.usernameBackArrow.isHidden = true
-        } else {
+            self.usernameEditArrow.isHidden = false
+            self.isAnimatingUsername = false
+        }
+    }
+    
+    if show {
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
             self.window.makeFirstResponder(self.username_field)
+            self.usernameEditArrow.isHidden = true
+            self.isAnimatingUsername = false
+        }
+    } else {
+        if !show {
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                self.isAnimatingUsername = false
+            }
         }
     }
 }
@@ -917,12 +1029,12 @@ override func mouseExited(with event: NSEvent) {
 */
 
     // set up power buttons below the card -
-    func setupPowerButtons(in rootView: NSView, cardFrame: NSRect) {
+    func setupPowerButtons(in rootView: NSView, centerY: CGFloat) {
     let buttonSize: CGFloat = 42
     let spacing: CGFloat = 16
     let totalWidth = (buttonSize * 3) + (spacing * 2)
     let startX = (rootView.frame.width - totalWidth) / 2
-    let buttonY = cardFrame.minY - 60 // 60px below card
+    let buttonY = centerY - buttonSize / 2
     
     shutdownButton = PowerButton(frame: NSRect(x: startX, y: buttonY, width: buttonSize, height: buttonSize))
     updatePowerButtonStyle(shutdownButton)
