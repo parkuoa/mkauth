@@ -7,7 +7,7 @@ struct logui_test {
         app.setActivationPolicy(.accessory) // accessory so no info.plist needed
 
         // let ui = LoginUI(onLogin: { un, pswd in
-        let ui = LoginUI(suggestedUser: "satomi", onLogin: { un, pswd in
+        let ui = LoginUI(suggestedUser: "user", onLogin: { un, pswd in
             print("--------------------------------------------------")
             print("login UI returned:")
             print("username: \(un)")

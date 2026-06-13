@@ -1,17 +1,12 @@
 CLI = bengal/bengal
 CLI_SOURCES = bengal/*.swift
 SWIFT = swiftc
-APP_NAME = bengal.app
-APP_BUILDDIR= app_build
-APP_BUNDLE_DIR = $(APP_BUILDDIR)/$(APP_NAME)
-APP_SOURCES = app/*.swift
-LOGIN_UI_BUILDDIR = AuthorizationBundle/build
-LOGIN_UI = AuthorizationBundle/build/BengalLogin.bundle
-FONTS = AuthorizationBundle/Resources/*.ttf
+AUTHBUNDLE ?= AuthorizationBundle
+APP_CORE ?=
 
-.PHONY: all clean* cli bundle app help
+.PHONY: all clean cli authbundle help
 
-all: $(CLI) bundle app
+all: $(CLI)
 
 $(CLI): $(CLI_SOURCES)
 	/usr/bin/swiftc $(CLI_SOURCES) -o $(CLI)
@@ -19,49 +14,37 @@ $(CLI): $(CLI_SOURCES)
 cli:
 	/usr/bin/swiftc $(CLI_SOURCES) -o $(CLI)
 
-bundle:
-	/bin/bash ./AuthorizationBundle/build.sh
+authbundle: validate-authbundle
+	@echo "building auth bundle from $(AUTHBUNDLE)..."
+	@cd "$(AUTHBUNDLE)" && APP_CORE="$(APP_CORE)" /bin/bash ./build.sh
 
-app: $(CLI)
-	@echo "building bengal.app..."
-	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/MacOS"
-	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources"
-	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources/img"
-	@mkdir -p "$(APP_BUNDLE_DIR)/Contents/Resources/login/BengalLogin.bundle"
-	$(SWIFT) $(APP_SOURCES) -o "$(APP_BUNDLE_DIR)/Contents/MacOS/bengalwrapper"
-	@cp app/Info.plist "$(APP_BUNDLE_DIR)/Contents/"
-	@cp $(CLI) "$(APP_BUNDLE_DIR)/Contents/Resources/"
-	@cp $(FONTS) "$(APP_BUNDLE_DIR)/Contents/Resources/"
-	@cp -r app/img/* "$(APP_BUNDLE_DIR)/Contents/Resources/img/" 2>/dev/null || true
-	@cp app/img/logo.icns "$(APP_BUNDLE_DIR)/Contents/Resources/" 2>/dev/null || true
-	/bin/bash ./AuthorizationBundle/build.sh
-	@cp -rf AuthorizationBundle/build/BengalLogin.bundle/* "$(APP_BUNDLE_DIR)/Contents/Resources/login/BengalLogin.bundle/"
-	@echo "app built successfully: $(APP_BUNDLE_DIR)"
+validate-authbundle:
+	@if [ -z "$(AUTHBUNDLE)" ] || [ ! -d "$(AUTHBUNDLE)" ]; then \
+		echo "AUTHBUNDLE must point to a valid AuthorizationBundle checkout." >&2; \
+		exit 1; \
+	fi
+	@for f in core/LoginUI.swift core/AuthorizationPlugin.swift core/Mechanism.swift Info.plist build.sh; do \
+		if [ ! -f "$(AUTHBUNDLE)/$$f" ]; then \
+			echo "Missing required authbundle file: $(AUTHBUNDLE)/$$f" >&2; \
+			exit 1; \
+		fi; \
+	done
+	@if [ -n "$(APP_CORE)" ] && [ ! -f "$(APP_CORE)/SettingsManager.swift" ]; then \
+		echo "APP_CORE must point to a directory containing SettingsManager.swift." >&2; \
+		exit 1; \
+	fi
 
 clean:
 	rm -f $(CLI)
-
-cleanbundle:
-	rm -rf $(LOGIN_UI_BUILDDIR)
-
-cleanapp:
-	rm -rf $(APP_BUILDDIR)
-
-cleanall:
-	rm -rf $(CLI) $(LOGIN_UI_BUILDDIR) $(APP_BUILDDIR)
 
 help:
 	@echo ""
 	@echo "make <target>"
 	@echo ""
 	@echo "targets:"
-	@echo "  all: build cli, bundle and app"
-	@echo "  cli: build cli"
-	@echo "  bundle: build plugin/auth bundle"
-	@echo "  app: build app"
+	@echo "  all/cli: build cli"
+	@echo "  authbundle: build auth bundle from external AuthorizationBundle checkout"
 	@echo "  clean: clean cli"
-	@echo "  cleanbundle: clean plugin/auth bundle"
-	@echo "  cleanapp: clean app"
-	@echo "  cleanall: clean all"
+	@echo "  cleanall: clean cli"
 	@echo "  help: Show this help message"
 	@echo ""

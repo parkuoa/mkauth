@@ -20,10 +20,6 @@
 Put simple: your own login process, from scratch. Feed your own login flow, and your own UI.
 You may add your own logic before the UI, during auth, or after the user logs in.
 
-**bengal** includes an **Authentication Plugin** bundled within (```AuthorizationBundle/```), alongside the user interface of the login screen itself (```AuthorizationBundle/Sources/LoginUI.swift```). ***(login screen UI customization requires using the app for now)***
-
-You may use this tool using the CLI or the [wrapper app](https://github.com/naomisphere/bengal/releases/latest). Prebuilts can be found in the [Releases](https://github.com/naomisphere/bengal/releases/latest) tab.
-
 ## Building
 ```bash
 % make help
@@ -31,16 +27,32 @@ You may use this tool using the CLI or the [wrapper app](https://github.com/naom
 make <target>
 
 targets:
-  all: build cli, plugin and app
-  cli: build cli
-  plugin: build plugin/auth bundle
-  app: build app
+  all/cli: build cli
+  authbundle: build auth bundle from external AuthorizationBundle checkout
   clean: clean cli
-  cleanplugin: clean plugin/auth bundle
-  cleanapp: clean app
-  cleanall: clean all
   help: Show this help message
   ```
+
+To build an authorization bundle:
+
+```bash
+AUTHBUNDLE=/path/to/AuthorizationBundle make authbundle
+```
+
+If the bundle uses bengal's app settings, provide that path with `APP_CORE`:
+
+```bash
+AUTHBUNDLE=/path/to/AuthorizationBundle APP_CORE=/path/to/app_core make authbundle
+```
+
+The bundle must contain:
+* `Info.plist`
+* `core/LoginUI.swift`
+* `core/AuthorizationPlugin.swift`
+* `core/Mechanism.swift`
+
+If using `APP_CORE`, that path mandatorily must contain:
+* `SettingsManager.swift`
 
 ## CLI Guide
 
