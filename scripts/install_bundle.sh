@@ -1,3 +1,21 @@
+#!/bin/bash
+set -e
+
 #BASEDIR="${0:a:h}"
-BASEDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-sudo cp -rf ${BASEDIR}/../AuthorizationBundle/build/BengalLogin.bundle /Library/Security/SecurityAgentPlugins
+
+if [ -z "$AUTHBUNDLE" ]; then
+    echo "AUTHBUNDLE must be set" >&2
+    exit 1
+fi
+
+BUILT_AUTH_BUNDLE="$AUTHBUNDLE/build/BengalLogin.bundle"
+AUTH_PLUGIN_FOLDER="/Library/Security/SecurityAgentPlugins"
+
+if [ ! -e "$BUILT_AUTH_BUNDLE" ]; then
+    echo "expected built auth bundle not found at $BUILT_AUTH_BUNDLE" >&2
+    exit 1
+fi
+
+sudo mkdir -p "$AUTH_PLUGIN_FOLDER"
+sudo rm -rf "$AUTH_PLUGIN_FOLDER/BengalLogin.bundle"
+sudo cp -a "$BUILT_AUTH_BUNDLE" "$AUTH_PLUGIN_FOLDER"

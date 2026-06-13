@@ -10,7 +10,7 @@ if [ -z "$AUTHBUNDLE" ]; then
 fi
 RESOURCES_DIR="$(dirname "$BINARY")/Resources"
 
-echo "compiling present login UI..."
+echo "compiling given login UI..."
 swiftc "$AUTHBUNDLE/core/LoginUI.swift" "$BASEDIR/test_login_ui.swift" \
     "$AUTHBUNDLE/core/SettingsManager.swift" \
     "$AUTHBUNDLE/core/BundleLog.swift" \
