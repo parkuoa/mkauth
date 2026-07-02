@@ -37,7 +37,6 @@ class Preferences {
         based on authchanger v2.1.0
 
         mkauth is a utility to help you manage the authorization database used by macOS to determine how the login process progresses.
-        Some commands must be run as root.
         
         Usage:
             mkauth <command> [options]
@@ -48,14 +47,16 @@ class Preferences {
             help                  show this help message
             --version             print version
             --reset               reset authdb to default
-            --apply               apply a custom login mechanism
-            --create-privileged   add auxiliary privileged mechanisms
+
+            --apply                   apply a custom login mechanism
+            	--create-privileged   add auxiliary privileged mechanisms
+            	--prelogin            set pre-login mechanisms
+            	--preauth             set pre-authentication mechanisms
+            	--postauth            set post-authentication mechanisms
+
             --print               print current authorization mechanisms
             --debug               dry run of changes showing what would've happened
             --customrule          manage custom authorization rules
-            --prelogin            set pre-login mechanisms
-            --preauth             set pre-authentication mechanisms
-            --postauth            set post-authentication mechanisms
         """
         print(help)
     }
