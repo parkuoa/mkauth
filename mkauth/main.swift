@@ -2,7 +2,7 @@
     main.swift
     mkauth
   
-    Copyright © 2026 naomisphere
+    Copyright © 2026 parkuoa
     Derived from authchanger 2.1.0 (Copyright © 2017 Joel Rennich).
 */
 
