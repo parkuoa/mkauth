@@ -1,2 +1,7 @@
 **/.DS_Store
 .vscode
+
+# secmgr
+/output
+/output/secmgr
+
