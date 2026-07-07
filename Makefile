@@ -1,4 +1,5 @@
-CLI = secmgr/secmgr
+OUTPUT_DIR = output
+CLI = $(OUTPUT_DIR)/secmgr
 CLI_SOURCES = secmgr/*.swift
 SWIFT = swiftc
 AUTHBUNDLE ?= AuthorizationBundle
@@ -6,12 +7,15 @@ APP_CORE ?=
 
 .PHONY: all clean cli authbundle help install
 
-all: $(CLI)
+all:
+	mkdir $(OUTPUT_DIR)
+	/usr/bin/swiftc $(CLI_SOURCES) -o $(CLI)
 
 $(CLI): $(CLI_SOURCES)
 	/usr/bin/swiftc $(CLI_SOURCES) -o $(CLI)
 
 cli:
+	mkdir $(OUTPUT_DIR)
 	/usr/bin/swiftc $(CLI_SOURCES) -o $(CLI)
 
 authbundle: validate-authbundle
@@ -36,6 +40,7 @@ validate-authbundle:
 
 clean:
 	rm -f $(CLI)
+	rmdir $(OUTPUT_DIR)
 
 install:
 	sudo cp $(CLI) /usr/local/bin
