@@ -3,7 +3,11 @@ CLI = $(OUTPUT_DIR)/secmgr
 CLI_SOURCES = secmgr/*.swift
 SWIFT = swiftc
 AUTHBUNDLE ?= AuthorizationBundle
-APP_CORE ?=
+MANAGER_CORE ?=
+
+# manager-related
+MANAGER_CORE_SRC = $(wildcard $(MANAGER_CORE)/*.swift)
+MANAGER_OUTPUT = $(OUTPUT_DIR)/manager/ThemeManager.app
 
 .PHONY: all clean cli authbundle help install
 
@@ -20,7 +24,7 @@ cli:
 
 authbundle: validate-authbundle
 	@echo "building auth bundle from $(AUTHBUNDLE)..."
-	@cd "$(AUTHBUNDLE)" && APP_CORE="$(APP_CORE)" /bin/bash ./build.sh
+	@cd "$(AUTHBUNDLE)" && MANAGER_CORE="$(MANAGER_CORE)" /bin/bash ./build.sh
 
 validate-authbundle:
 	@if [ -z "$(AUTHBUNDLE)" ] || [ ! -d "$(AUTHBUNDLE)" ]; then \
@@ -33,18 +37,30 @@ validate-authbundle:
 			exit 1; \
 		fi; \
 	done
-	@if [ -n "$(APP_CORE)" ] && [ ! -f "$(APP_CORE)/SettingsManager.swift" ]; then \
-		echo "APP_CORE must point to a directory containing SettingsManager.swift." >&2; \
+	@if [ -n "$(MANAGER_CORE)" ] && [ ! -f "$(MANAGER_CORE)/SettingsManager.swift" ]; then \
+		echo "MANAGER_CORE must point to a directory containing SettingsManager.swift." >&2; \
 		exit 1; \
 	fi
 
 clean:
 	rm -f $(CLI)
-	rmdir $(OUTPUT_DIR)
+	rm -rf $(OUTPUT_DIR)
 
 install:
 	sudo cp $(CLI) /usr/local/bin
 
+manager:
+	@mkdir -p $(MANAGER_OUTPUT)/Contents/{MacOS,Resources}
+	$(SWIFT) -target arm64-apple-macosx11.0 $(MANAGER_CORE_SRC) -o "$(MANAGER_OUTPUT)/Contents/MacOS/thememanager"
+
+	@mkdir -p "$(MANAGER_OUTPUT)/Contents/Resources/img"
+	@mkdir -p "$(MANAGER_OUTPUT)/Contents/Resources/login/BengalLogin.bundle"
+	@cp $(MANAGER_CORE)/Info.plist "$(MANAGER_OUTPUT)/Contents/"
+	@cp -r $(MANAGER_CORE_SRC) "$(MANAGER_OUTPUT)/Contents/MacOS/"
+	@cp -r $(MANAGER_CORE)/img/* "$(MANAGER_OUTPUT)/Contents/Resources/img/"
+	@cp $(MANAGER_CORE)/img/logo.icns "$(MANAGER_OUTPUT)/Contents/Resources/"
+	@cp -rf $(AUTHBUNDLE)/build/BengalLogin.bundle/* "$(MANAGER_OUTPUT)/Contents/Resources/login/BengalLogin.bundle/"
+	
 help:
 	@echo ""
 	@echo "make <target>"
